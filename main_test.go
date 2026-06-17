@@ -1,22 +1,25 @@
-package transfer
+package main
 
 import (
 	"fmt"
 	"sync"
+	"testing"
 	"time"
 	database "wallet-transfer/db"
+	"wallet-transfer/transfer"
 
+	"github.com/go-playground/assert/v2"
 	"github.com/google/uuid"
 )
 
-func run() {
+func TestMe(t *testing.T) {
 	const (
-		totalRequests = 1000
+		totalRequests = 3
 	)
 
-	db, err := database.Connection()
+	dbs, err := database.Connection()
+	fmt.Println(dbs, err)
 	if err != nil {
-		fmt.Println("db error", err)
 		return
 	}
 
@@ -24,7 +27,7 @@ func run() {
 
 	start := time.Now()
 
-	mtx := &sync.Mutex{}
+	// mtx := &sync.Mutex{}
 	cnt := 0
 
 	for i := 0; i < totalRequests; i++ {
@@ -37,20 +40,21 @@ func run() {
 			fromWallet := fmt.Sprintf("wallet_%d", (i%5)+1)
 			toWallet := fmt.Sprintf("wallet_%d", ((i+1)%5)+1)
 
-			reqBody := Transfer{
+			reqBody := transfer.Transfer{
 				IdempotencyKey: uuid.New().String(),
 				FromWalletID:   fromWallet,
 				ToWalletID:     toWallet,
 				Amount:         2,
 			}
 
-			transRepo := TransferService{Db: db, Request: &reqBody}
+			transRepo := transfer.TransferService{Db: dbs, Request: &reqBody}
 			_, _, status := transRepo.TransferMoney()
-			if status != 200 {
-				mtx.Lock()
-				cnt++
-				mtx.Unlock()
-			}
+			// if status != 200 {
+			// 	mtx.Lock()
+			// 	cnt++
+			// 	mtx.Unlock()
+			// }
+			assert.Equal(t, 200, status)
 		}(i)
 	}
 

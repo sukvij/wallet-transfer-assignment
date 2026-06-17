@@ -1,8 +1,6 @@
 package idempotency
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 )
 
@@ -35,7 +33,7 @@ func (repo *IdemRepository) UpdateIdempotencyStatus(tx *gorm.DB, idempotency_key
 	return err
 }
 func (repo *IdemRepository) CreateIdempotencyEntry(tx *gorm.DB, idemp *IdempotencyRecord) error {
-	fmt.Println("ye aa rha hain ", idemp)
+	// fmt.Println("ye aa rha hain ", idemp)
 	err := tx.Create(idemp).Error
 	return err
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"wallet-transfer/idempotency"
 	"wallet-transfer/ledger"
 	"wallet-transfer/wallet"
@@ -22,7 +21,7 @@ func (ser *TransferService) TransferMoney() (interface{}, error, int) {
 	// check idempotency
 	idemSer := &idempotency.IdemService{Db: ser.Db}
 	idemObj, idempotencyFounded := idemSer.GetIdempotencyById(ser.Request.IdempotencyKey)
-	fmt.Println("1 ", idemObj, idempotencyFounded)
+	// fmt.Println("1 ", idemObj, idempotencyFounded)
 	if idemObj != nil {
 		// founded
 		switch idemObj.Status {
@@ -46,7 +45,7 @@ func (ser *TransferService) TransferMoney() (interface{}, error, int) {
 }
 
 func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) error {
-	fmt.Println("createa transactions", req)
+	// fmt.Println("createa transactions", req)
 	tx := ser.Db.Begin(&sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 	})
@@ -54,20 +53,20 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 	var err error
 	defer func() {
 		if err != nil {
-			fmt.Println("defer called.")
+			// fmt.Println("defer called.")
 			tx.Rollback()
 		}
 	}()
 
 	// lock wallets of user1 and user2 for updates
-	fmt.Println("loc wallets")
+	// fmt.Println("loc wallets")
 	walletrepo := wallet.WalletRepo{}
-	wallets, err := walletrepo.LockWalletsAndUpdate(ctx, tx, req.FromWalletID, req.ToWalletID, req.Amount)
+	wallets, err := walletrepo.LockWallets(ctx, tx, req.FromWalletID, req.ToWalletID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("locing successfully.")
+	// fmt.Println("locing successfully.")
 
 	fromWallet := wallets[0]
 	toWallet := wallets[1]
@@ -76,17 +75,17 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 		return errors.New("in sufficient balance")
 	}
 
-	fmt.Println("sufficient balance.")
+	// fmt.Println("sufficient balance.")
 	// deduct money from from user
 
 	transferRepo := TransferRepo{}
 	transfer, err := transferRepo.Create(tx, req)
-	fmt.Println("trans", transfer, err)
+	// fmt.Println("trans", transfer, err)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("create transfer successfully.")
+	// fmt.Println("create transfer successfully.")
 
 	// transfer from user --> update from user balance
 
@@ -94,7 +93,7 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 	if err != nil {
 		return err
 	}
-	fmt.Println("from wallet deduct ssuccessfully.")
+	// fmt.Println("from wallet deduct ssuccessfully.")
 	ledgerRepo := ledger.LedgerRepo{}
 	// ledgerRepo.CreateEntries()
 	err = ledgerRepo.CreateEntries(tx, ledger.LedgerEntry{WalletID: req.FromWalletID, TransferID: transfer.ID, Type: "DEBIT", Amount: req.Amount})
@@ -102,28 +101,28 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 		return err
 	}
 
-	fmt.Println("debit ledger entry successfully.")
+	// fmt.Println("debit ledger entry successfully.")
 
 	err = walletrepo.UpdateWallet(ctx, tx, req.ToWalletID, toWallet.Balance+req.Amount)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("to wallet add money successfully.")
+	// fmt.Println("to wallet add money successfully.")
 
 	err = ledgerRepo.CreateEntries(tx, ledger.LedgerEntry{WalletID: req.ToWalletID, TransferID: transfer.ID, Type: "CREDIT", Amount: req.Amount})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("credit ledger entry successfully.")
+	// fmt.Println("credit ledger entry successfully.")
 
 	err = transferRepo.UpdateState(tx, transfer.ID, "PROCESSED")
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("update transfer status successfully.")
+	// fmt.Println("update transfer status successfully.")
 
 	idemRepo := &idempotency.IdemRepository{}
 	err = idemRepo.CreateIdempotencyEntry(tx, &idempotency.IdempotencyRecord{IdempotencyKey: req.IdempotencyKey, TransferID: transfer.ID, Status: "COMPLETED"})
@@ -131,13 +130,12 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 		return err
 	}
 
-	fmt.Println("creat idempotency successfully. entry.")
+	// fmt.Println("creat idempotency successfully. entry.")
 	err = tx.Commit().Error
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("successfullt commited.")
-	fmt.Println("completed bro...")
+	// fmt.Println("successfullt commited.")
 	return nil
 }

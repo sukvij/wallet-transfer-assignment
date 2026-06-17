@@ -6,6 +6,7 @@ import (
 	"wallet-transfer/transfer"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -15,4 +16,8 @@ func main() {
 	app := gin.Default()
 	transfer.TransferController(app, db)
 	app.Run(":8080")
+}
+
+func DbConn() (*gorm.DB, error) {
+	return database.Connection()
 }

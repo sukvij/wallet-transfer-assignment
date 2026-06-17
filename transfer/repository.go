@@ -1,8 +1,6 @@
 package transfer
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 )
 
@@ -38,7 +36,7 @@ func (r *TransferRepo) Create(
 		return nil, err
 	}
 
-	fmt.Println("inserted successfully...")
+	// fmt.Println("inserted successfully...")
 	var res Transfer
 	err = tx.Where("idempotency_key = ?", transfer.IdempotencyKey).Find(&res).Error
 	if err != nil {
