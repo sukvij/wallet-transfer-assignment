@@ -14,21 +14,21 @@ import (
 
 func TestMe(t *testing.T) {
 	const (
-		totalRequests = 3
+		totalRequests = 50
 	)
 
 	dbs, err := database.Connection()
-	fmt.Println(dbs, err)
+	// fmt.Println(dbs, err)
 	if err != nil {
 		return
 	}
 
 	var wg sync.WaitGroup
 
-	start := time.Now()
+	// start := time.Now()
 
 	// mtx := &sync.Mutex{}
-	cnt := 0
+	// cnt := 0
 
 	for i := 0; i < totalRequests; i++ {
 		time.Sleep(1 * time.Millisecond)
@@ -60,9 +60,9 @@ func TestMe(t *testing.T) {
 
 	wg.Wait()
 
-	fmt.Printf("\nCompleted %d requests in %v\n",
-		totalRequests,
-		time.Since(start),
-	)
-	fmt.Println("successfull ", totalRequests-cnt, " failed ", cnt)
+	// fmt.Printf("\nCompleted %d requests in %v\n",
+	// 	totalRequests,
+	// 	time.Since(start),
+	// )
+	// fmt.Println("successfull ", totalRequests-cnt, " failed ", cnt)
 }
