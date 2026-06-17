@@ -1,47 +1,51 @@
-Flow of Transactions
-    check idempotency --> if exit then return the status of transactions
-    if not
-        create transactions
-        lock wallets --> for both sender and receiver
-            most important --> lock wallet in increasing id of wallet_id otherwise deadlock can occur.
-        create transfer entry in db --> with pending status
-        transfer money from user1 account
-        insert ledger debit
-        transfer money from user2(to user) wallet
-        insert ledger credit
-        update transfer with successfully
-        create idempotency with successfull status
-        commited
-        otherwise rollbac if error
-        
+# Flow of Transactions
 
+1. **Check idempotency** ➔ if exists then return the status of transactions
+2. **If not:**
+    * Create transactions
+    * Lock wallets ➔ for both sender and receiver
+        * > **Most Important:** Lock wallet in increasing ID of `wallet_id`, otherwise deadlock can occur.
+    * Create transfer entry in DB ➔ with pending status
+    * Transfer money from user1 account
+    * Insert ledger debit
+    * Transfer money from user2 (to user) wallet
+    * Insert ledger credit
+    * Update transfer with successfully
+    * Create idempotency with successful status
+    * Committed
+    * Otherwise rollback if error
 
-Database Choose;
-    This is money transfer app so need to ensure ACID compilation. so choose postgres.
-    wallet, transfer, ledger_entries and idempotency_records all are postgres.
-    foreign key --
-        wallets(wallet_id)  for transfers
-        wallets(wallet_id)  for ledger_entries
+---
 
-    Add properly indexes on 
-        transfers(from_wallet_id)
-        transfers(to_wallet_id)
+# Database Choice
 
-Transaction Safety
-    when lock wallet --> lock id in increasing order
+This is a money transfer app so we need to ensure ACID compliance. So we choose **PostgreSQL**.
 
+* `wallet`, `transfer`, `ledger_entries`, and `idempotency_records` all are in Postgres.
+* **Foreign keys:**
+    * `wallets(wallet_id)` for `transfers`
+    * `wallets(wallet_id)` for `ledger_entries`
 
+### Indexes
+Add proper indexes on:
+* `transfers(from_wallet_id)`
+* `transfers(to_wallet_id)`
 
-Test cases
-    10 concurrent --> 100% successfull
-    50 concurrent --> 100% successfull time ==> 1.0127165s
-    100 concurrent --> 100% successfull time ==> 1.4835776s or 2.2954332s
-    200 concurrent --> 100% successfull  time --> 2.3527446s sec
-    400 concurrent (1 milli seccond gap)--> 100% successfull time ==> 2.9907291s
-    1000 concurrent (1 milli seccond gap)--> 100% successfull time ==> 6.625749s 
+---
 
+# Transaction Safety
 
+* When locking wallets ➔ lock ID in increasing order.
 
-    DEBIT == CREDIT  for all cases
+---
 
+# Test Cases
 
+* **10 concurrent** ➔ 100% successful
+* **50 concurrent** ➔ 100% successful, time ==> 1.0127165s
+* **100 concurrent** ➔ 100% successful, time ==> 1.4835776s or 2.2954332s
+* **200 concurrent** ➔ 100% successful, time ==> 2.3527446s
+* **400 concurrent** (1 millisecond gap) ➔ 100% successful, time ==> 2.9907291s
+* **1000 concurrent** (1 millisecond gap) ➔ 100% successful, time ==> 6.625749s
+
+> **DEBIT == CREDIT for all cases**
