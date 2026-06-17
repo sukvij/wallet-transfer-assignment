@@ -7,14 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+// var db *gorm.DB
 
-func TransferController(app *gin.Engine, Db *gorm.DB) {
-	db = Db
-	app.POST("/transfer", transferMoney)
+type Controller struct {
+	Db *gorm.DB
 }
 
-func transferMoney(ctx *gin.Context) {
+func TransferController(app *gin.Engine, Db *gorm.DB) {
+	controller := &Controller{Db: Db}
+	app.POST("/transfer", controller.transferMoney)
+}
+
+func (controller *Controller) transferMoney(ctx *gin.Context) {
 	var transfer Transfer
 
 	err := ctx.ShouldBindJSON(&transfer)
@@ -28,9 +32,9 @@ func transferMoney(ctx *gin.Context) {
 		return
 	}
 
-	trasnferService := &TransferService{Db: db, Request: &transfer}
+	transferService := &TransferService{Db: controller.Db, Request: &transfer}
 
-	res, err, status := trasnferService.TransferMoney()
+	res, err, status := transferService.TransferMoney()
 	if err != nil {
 		ctx.JSON(status, gin.H{"message": err.Error()})
 		return

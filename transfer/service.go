@@ -37,7 +37,7 @@ func (ser *TransferService) TransferMoney() (interface{}, error, int) {
 			if err != nil {
 				return "", err, 500
 			}
-			return "fund transfered successfully.", nil, 200
+			return "fund transferred successfully.", nil, 200
 		}
 		return "", idempotencyFounded, 500
 	}
@@ -72,7 +72,8 @@ func (ser *TransferService) CreateTransfer(ctx context.Context, req Transfer) er
 	toWallet := wallets[1]
 
 	if fromWallet.Balance < req.Amount {
-		return errors.New("in sufficient balance")
+		err = errors.New("in sufficient balance")
+		return err
 	}
 
 	// fmt.Println("sufficient balance.")

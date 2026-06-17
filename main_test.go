@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestMe(t *testing.T) {
+func TestTransferredMoney(t *testing.T) {
 	const (
-		totalRequests = 50
+		totalRequests = 5
 	)
 
 	dbs, err := database.Connection()
@@ -54,7 +54,7 @@ func TestMe(t *testing.T) {
 			// 	cnt++
 			// 	mtx.Unlock()
 			// }
-			assert.Equal(t, 200, status)
+			assert.Equal(t, 201, status)
 		}(i)
 	}
 

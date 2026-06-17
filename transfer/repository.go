@@ -38,7 +38,7 @@ func (r *TransferRepo) Create(
 
 	// fmt.Println("inserted successfully...")
 	var res Transfer
-	err = tx.Where("idempotency_key = ?", transfer.IdempotencyKey).Find(&res).Error
+	err = tx.Where("idempotency_key = ?", transfer.IdempotencyKey).First(&res).Error
 	if err != nil {
 		return nil, err
 	}
